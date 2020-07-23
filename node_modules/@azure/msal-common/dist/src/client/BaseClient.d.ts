@@ -1,0 +1,35 @@
+import { ClientConfiguration } from "../config/ClientConfiguration";
+import { INetworkModule } from "../network/INetworkModule";
+import { ICrypto } from "../crypto/ICrypto";
+import { Authority } from "../authority/Authority";
+import { Logger } from "../logger/Logger";
+import { NetworkResponse } from "../network/NetworkManager";
+import { ServerAuthorizationTokenResponse } from "../server/ServerAuthorizationTokenResponse";
+import { CacheManager } from "../cache/CacheManager";
+/**
+ * Base application class which will construct requests to send to and handle responses from the Microsoft STS using the authorization code flow.
+ */
+export declare abstract class BaseClient {
+    logger: Logger;
+    protected config: ClientConfiguration;
+    protected cryptoUtils: ICrypto;
+    protected cacheManager: CacheManager;
+    protected networkClient: INetworkModule;
+    protected authority: Authority;
+    protected constructor(configuration: ClientConfiguration);
+    /**
+     * Creates default headers for requests to token endpoint
+     */
+    protected createDefaultTokenRequestHeaders(): Map<string, string>;
+    /**
+     * addLibraryData
+     */
+    protected createDefaultLibraryHeaders(): Map<string, string>;
+    /**
+     * Http post to token endpoint
+     * @param tokenEndpoint
+     * @param queryString
+     * @param headers
+     */
+    protected executePostToTokenEndpoint(tokenEndpoint: string, queryString: string, headers: Map<string, string>): Promise<NetworkResponse<ServerAuthorizationTokenResponse>>;
+}
