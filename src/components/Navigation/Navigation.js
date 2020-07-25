@@ -1,7 +1,10 @@
 import React, { useState, useContext, useEffect, useRef } from "react";
+import since from "since-time-ago";
+import _ from "lodash";
+import DateDiff from "date-diff";
 import { borders } from "@material-ui/system";
 import { shadows } from "@material-ui/system";
-import { Paper } from "@material-ui/core";
+import { Grid } from "@material-ui/core";
 import { NavigationContext } from "./NavigationContext";
 import { TransactContext } from "../Transact/TransactContext";
 import { AppContext } from "../../AppContext";
@@ -118,7 +121,6 @@ import {
   createMuiTheme,
   withStyles
 } from "@material-ui/core/styles";
-
 const theme = createMuiTheme({
   overrides: {
     MuiButton: {
@@ -327,6 +329,29 @@ const useStyles = makeStyles((theme) => ({
     borderColor: "#011133",
     maxWidth: 650,
     minWidth: 620,
+  },
+  notifications_card: {
+    borderWidth: "thin",
+    overflow:"hidden",
+    borderColor: "#011133",
+    maxWidth: 400,
+    minWidth: 300,
+    right:0,
+    borderRadius:5,
+    paddingBottom: 10,
+    boxShadow: "0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)",
+    // before:{
+    //   content:'',
+    //   position: "absolute",
+    //   left: 0,
+    //   right: 0,
+    //   margin: 0,
+    //   width: 0,
+    //   height: 0,
+    //   borderTop: "25px solid #6A0136",
+    //   borderLeft:" 50px solid transparent",
+    //   borderRight: "50px solid transparent",
+    // },
   },
   cardTitle: {
     fontFamily: "Poppins",
@@ -569,6 +594,21 @@ const useStyles = makeStyles((theme) => ({
     marginTop: "6px",
     color: theme.palette.secondary.contrastText,
   },
+  expansionPanel: {
+    '&:hover': {
+      cursor: 'pointer',
+      backgroundColor:"#ffedbd",
+    },
+    borderBottom: "1px solid #f2f2f2"
+  },
+  expandedPanel: {
+    '&:hover': {
+      cursor: 'pointer',
+      backgroundColor:"#ffedbd",
+    },
+    borderBottom: "1px solid #f2f2f2"
+
+  },
 
   supportDrawer: {
     position: "fixed",
@@ -579,6 +619,11 @@ const useStyles = makeStyles((theme) => ({
       paddingRight: "30px",
     },
   },
+  divider:{
+    backgroundColor:"#f2f2f2",
+    padding: 10,
+  }
+
 }));
 
 const M1neralLogoDrawer = (props) => (
@@ -699,6 +744,7 @@ export default function Navigation(props) {
   const [matchFind, setMatchFind] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
   const [getProfileImage, profiledata] = useLazyQuery(GETPROFILEIMAGE);
+  const [limitedNotif, setLimitedNotif] = useState(true);
   useEffect(() => {
     if (stateApp?.user?.email) {
       getProfileImage({
@@ -1023,6 +1069,7 @@ export default function Navigation(props) {
 
   const handleOpenNotificationsPanel = () => {
     setNotificationsPanel(true);
+    setLimitedNotif(false);
   };
 
   const [expanded, setExpanded] = React.useState(false);
@@ -1044,61 +1091,103 @@ export default function Navigation(props) {
       activeDeal: { cardId: null, laneId: null },
     }));
   };
-
-  const NotificationsList = () => {
+  const NewAccordion = (props) =>{
+    const {data} = props;
+    return data.map((row,index) =>{
+      const is_expanded = expanded === `panel${index}`;
+      return(
+            <Accordion 
+              key={index}
+              expanded={is_expanded} 
+              onChange={handleExpand(`panel${index}`)} 
+              className={is_expanded ? classes.expandedPanel : classes.expansionPanel}
+            >
+              <AccordionSummary
+                // expandIcon={<ExpandMoreIcon />}
+                aria-controls="panel1bh-content"
+                id="panel1bh-header"
+              >
+                <Grid container>
+                <Grid item md={9}>
+                  <Typography 
+                    variant="body1"
+                    style={is_expanded ? {fontWeight: "bold"} : {fontWeight: "normal"} }
+                    >
+                      {row.title} 
+                  </Typography>
+                </Grid>
+                <Grid item md={3}>
+                  <Typography style={{fontSize: 12,color:"grey", width:"100%"}}>
+                    {
+                    since(new Date(row.ts).getTime())
+                    }
+                  </Typography>
+                </Grid>
+                <Grid item md={12}>
+                  <Typography style={{fontSize: 12,color:"grey", width:"100%"}}>
+                    {`${row.api} - ${row.address}`}
+                  </Typography>
+                </Grid>
+                </Grid>
+                
+              </AccordionSummary>
+              <AccordionDetails>
+                <Typography variant="subtitle1">
+                  {row.details}
+                </Typography>
+              </AccordionDetails>
+            </Accordion>
+      );
+      })
+  };
+  const NotificationsList = (props) => {
+    const { isLimited } = props;
+    const initialized = [];
     if ( stateApp.trackedwells !== null){
-        return stateApp.trackedwells.map(data => {
-          return data.notifications.map((row, index) => {
-            const is_expanded = expanded === `panel${index}`;
-            return(
-              <div key={index}>
-                <Accordion 
-                  expanded={is_expanded} 
-                  onChange={handleExpand(`panel${index}`)} 
-                  style={is_expanded ? {backgroundColor:"#ffedbd"} : {backgroundColor:""}}
-                >
-                  <AccordionSummary
-                    expandIcon={<ExpandMoreIcon />}
-                    aria-controls="panel1bh-content"
-                    id="panel1bh-header"
-                  >
-                      <Typography 
-                        className={classes.heading} 
-                        style={is_expanded ? {fontWeight: "bold"} : {fontWeight: "normal"} }
-                        >
-                          {row.title} 
-                          {row.isNew &&
-                          <span style={{backgroundColor:"red", fontSize: 12, padding: 2, margin: 2, borderRadius: 5, color:"#fff"}}>  new</span>
-                            }
-                      </Typography>
-                  {/* <Typography className={classes.secondaryHeading}>I am an accordion</Typography> */}
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    <Typography>
-                      {row.details}
-                    </Typography>
-                  </AccordionDetails>
-                </Accordion>
-              </div>
-            );
+         stateApp.trackedwells.forEach((data, index) => {
+           data.notifications.forEach((row, row_index) => {
+            initialized.push(row);
           });
-        
       });
-      }else{
+    const sorted = _.orderBy(initialized, o=>new Date(o.ts), 'desc');
+    const recent = _.filter(sorted, o=>{return new DateDiff(new Date(), new Date(o.ts)).days() <= 7 });
+    const older = _.filter(sorted, o=>{return new DateDiff(new Date(), new Date(o.ts)).days() > 7 });
+    return(
+      <div>
+        {
+         isLimited ? (
+           <>
+          <div className={classes.divider}>
+            <Typography variant="overline">Recent</Typography>
+          </div>
+          <NewAccordion data={recent}/>
+          <div className={classes.divider}>
+            <Typography variant="overline">Older</Typography>
+          </div>
+          <NewAccordion data={older}/>
+          </>
+         )
+         :
+         <NewAccordion data={sorted}/>
+
+       }
+      </div>
+    );
+    }else{
         return (
-          <Typography>Error</Typography>
+          <CircularProgress/>
         )
       }
   };
 
   const NotificationsPanel = props => {
     const [open, setOpen] = useState(false);
-    const {isOpen, setIsOpen} = props;
+    const {isOpen, setIsOpen, isLimited} = props;
   
     const DialogTitle = withStyles(useStyles())((props) => {
       const { children, classes, onClose, ...other } = props;
       return (
-        <MuiDialogTitle disableTypography className={classes.root} {...other}>
+        <MuiDialogTitle disableTypography className={classes.root} {...other} color="primary">
           <Typography variant="h6">{children}</Typography>
           {onClose ? (
             <IconButton aria-label="close" className={classes.closeButton} onClick={onClose}>
@@ -1126,6 +1215,7 @@ export default function Navigation(props) {
     const handleClose = () => {
       setOpen(false);
       setIsOpen(false);
+      setLimitedNotif(true);
     };
   
     useEffect(() => {
@@ -1134,20 +1224,18 @@ export default function Navigation(props) {
   
     return (
       <div>
-    <Dialog onClose={handleClose} aria-labelledby="customized-dialog-title" open={open}>
-        <DialogTitle>
-          Notifications
-        </DialogTitle>
-    <DialogContent dividers>
-    <NotificationsList/>
-    </DialogContent>
-    <DialogActions>
-      <Button autoFocus onClick={handleClose} color="primary">
-        Close
-      </Button>
-    </DialogActions>
-  </Dialog>
-  </div>
+        <Dialog onClose={handleClose} open={open}>
+          <DialogTitle>
+            Notifications
+          </DialogTitle>
+          <DialogContent dividers>
+            <NotificationsList isLimited={isLimited}/>
+          </DialogContent>
+          {/* <DialogActions>
+            
+          </DialogActions> */}
+        </Dialog>
+      </div>
   );
   }
 
@@ -2085,45 +2173,26 @@ export default function Navigation(props) {
               </Card>
             </ClickAwayListener>
           </TabPanel>
-          <TabPanel value={value} index={8} dir={theme.direction} style={{maxHeight: "50%"}}>
+          <TabPanel value={value} index={8} dir={theme.direction} style={{display: "flex", justifyContent:"flex-end"}}>
             <ClickAwayListener onClickAway={handleClickAway}>
-              <Card className={classes.card}>
+              <Card className={classes.notifications_card}>
                 <CardHeader
-                  classes={{
-                    title: classes.cardTitle,
-                    subheader: classes.subheader,
-                  }}
                   action={
                     <div>
-                      <IconButton
+                      <Typography
                         color="secondary"
-                        onClick={handleFilterCardClose}
+                        style={{margin: 4, right: 0, cursor: "pointer"}}
+                        onClick={handleOpenNotificationsPanel}
                       >
-                        <CloseIcon />
-                      </IconButton>
+                        See all
+                      </Typography>
                     </div>
                   }
                   title="Notifications"
-                  // subheader="Advanced Search"
                 />
-                {/* <CardActions
-                  classes={{
-                    root: classes.cardAction,
-                  }}
-                ></CardActions> */}
                 <CardContent className={classes.cardContent}>
-                  {/* <FilterDefaults /> */}
-                 <NotificationsList/>
+                 <NotificationsList isLimited={limitedNotif}/>
                 </CardContent>
-                <Button
-                  color="secondary"
-                  variant="outlined"
-                  size="small"
-                  style={{margin: 4, right: 0}}
-                  onClick={handleOpenNotificationsPanel}
-                >
-                  See all
-                </Button>
               </Card>
             </ClickAwayListener>
           </TabPanel>
@@ -2134,7 +2203,7 @@ export default function Navigation(props) {
         {props.children}
       </main>
       {renderMenu}
-    <NotificationsPanel isOpen={openNotificationsPanel} setIsOpen={setNotificationsPanel}/>
+    <NotificationsPanel isOpen={openNotificationsPanel} setIsOpen={setNotificationsPanel} isLimited={limitedNotif}/>
     </div>
   );
 }
