@@ -227,7 +227,7 @@ export default function SubTable(props) {
                   let badge = count > 0 ? count : null;
                   return (
                     <Badge badgeContent={badge} color="secondary">
-                    <NotificationsIcon/>
+                    <NotificationsIcon color="secondary"/>
                     </Badge>
                   );
                 },

@@ -19,6 +19,7 @@ import styled from "styled-components";
 import AppBar from "@material-ui/core/AppBar";
 import DashboardIcon from "@material-ui/icons/Dashboard";
 import NotificationsIcon from '@material-ui/icons/Notifications';
+import HighlightOffIcon from '@material-ui/icons/HighlightOff';
 import LayersIcon from "@material-ui/icons/Layers";
 //import Avatar from "@material-ui/core/Avatar";
 import Toolbar from "@material-ui/core/Toolbar";
@@ -606,7 +607,8 @@ const useStyles = makeStyles((theme) => ({
       cursor: 'pointer',
       backgroundColor:"#ffedbd",
     },
-    borderBottom: "1px solid #f2f2f2"
+    borderBottom: "1px solid #f3f3f3",
+    backgroundColor:"#f2f2f2",
 
   },
 
@@ -1070,6 +1072,7 @@ export default function Navigation(props) {
   const handleOpenNotificationsPanel = () => {
     setNotificationsPanel(true);
     setLimitedNotif(false);
+    handleClickAway();
   };
 
   const [expanded, setExpanded] = React.useState(false);
@@ -1104,8 +1107,6 @@ export default function Navigation(props) {
             >
               <AccordionSummary
                 // expandIcon={<ExpandMoreIcon />}
-                aria-controls="panel1bh-content"
-                id="panel1bh-header"
               >
                 <Grid container>
                 <Grid item md={9}>
@@ -1129,7 +1130,6 @@ export default function Navigation(props) {
                   </Typography>
                 </Grid>
                 </Grid>
-                
               </AccordionSummary>
               <AccordionDetails>
                 <Typography variant="subtitle1">
@@ -1141,7 +1141,6 @@ export default function Navigation(props) {
       })
   };
   const NotificationsList = (props) => {
-    const { isLimited } = props;
     const initialized = [];
     if ( stateApp.trackedwells !== null){
          stateApp.trackedwells.forEach((data, index) => {
@@ -1155,21 +1154,24 @@ export default function Navigation(props) {
     return(
       <div>
         {
-         isLimited ? (
+         limitedNotif ? (
            <>
           <div className={classes.divider}>
             <Typography variant="overline">Recent</Typography>
           </div>
           <NewAccordion data={recent}/>
+          { older.length > 0 && (
+          <>
           <div className={classes.divider}>
             <Typography variant="overline">Older</Typography>
           </div>
           <NewAccordion data={older}/>
           </>
+          )}
+          </>
          )
          :
          <NewAccordion data={sorted}/>
-
        }
       </div>
     );
@@ -1184,19 +1186,34 @@ export default function Navigation(props) {
     const [open, setOpen] = useState(false);
     const {isOpen, setIsOpen, isLimited} = props;
   
-    const DialogTitle = withStyles(useStyles())((props) => {
-      const { children, classes, onClose, ...other } = props;
+    const DialogTitle = (props) => {
+      const { children, onClose} = props;
       return (
-        <MuiDialogTitle disableTypography className={classes.root} {...other} color="primary">
-          <Typography variant="h6">{children}</Typography>
+        <MuiDialogTitle style={{backgroundColor: "#011133", padding: 0 }}>
+          <Grid container>
+            <Grid item md={11} sm={10}>
+          <Typography 
+            variant="h6" 
+            style={{color: "#fff", margin: 10}}
+            >
+              {children}
+          </Typography>
+          </Grid>
+          <Grid item md={1} sm={2}>
           {onClose ? (
-            <IconButton aria-label="close" className={classes.closeButton} onClick={onClose}>
-              <CloseIcon />
+            <IconButton 
+              style={{color: "#fff" }} 
+              className={classes.closeButton} 
+              onClick={onClose}
+              >
+                <HighlightOffIcon />
             </IconButton>
           ) : null}
+          </Grid>
+          </Grid>
         </MuiDialogTitle>
       );
-    });
+    };
     
     const DialogContent = withStyles((theme) => ({
       root: {
@@ -1214,22 +1231,22 @@ export default function Navigation(props) {
     
     const handleClose = () => {
       setOpen(false);
-      setIsOpen(false);
       setLimitedNotif(true);
+      setIsOpen(false);
     };
   
     useEffect(() => {
       setOpen(isOpen);
-    },[isOpen, setIsOpen]);
+    },[isOpen]);
   
     return (
       <div>
         <Dialog onClose={handleClose} open={open}>
-          <DialogTitle>
+          <DialogTitle onClose={handleClose}>
             Notifications
           </DialogTitle>
           <DialogContent dividers>
-            <NotificationsList isLimited={isLimited}/>
+            <NotificationsList />
           </DialogContent>
           {/* <DialogActions>
             
@@ -2191,7 +2208,7 @@ export default function Navigation(props) {
                   title="Notifications"
                 />
                 <CardContent className={classes.cardContent}>
-                 <NotificationsList isLimited={limitedNotif}/>
+                 <NotificationsList />
                 </CardContent>
               </Card>
             </ClickAwayListener>
