@@ -15,6 +15,7 @@ import styled from "styled-components";
 //@material-ui components
 import AppBar from "@material-ui/core/AppBar";
 import DashboardIcon from "@material-ui/icons/Dashboard";
+import NotificationsIcon from '@material-ui/icons/Notifications';
 import LayersIcon from "@material-ui/icons/Layers";
 //import Avatar from "@material-ui/core/Avatar";
 import Toolbar from "@material-ui/core/Toolbar";
@@ -43,6 +44,10 @@ import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import SwipeableDrawer from "@material-ui/core/SwipeableDrawer";
 import FormControl from "@material-ui/core/FormControl";
 import InputLabel from "@material-ui/core/InputLabel";
+import Accordion from '@material-ui/core/Accordion';
+import AccordionDetails from '@material-ui/core/AccordionDetails';
+import AccordionSummary from '@material-ui/core/AccordionSummary';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import { Link } from "react-router-dom";
 
 import Menu from "@material-ui/core/Menu";
@@ -83,6 +88,10 @@ import PeopleOutlineIcon from "@material-ui/icons/PeopleOutline";
 import ShoppingCartIcon from "@material-ui/icons/ShoppingCart";
 import DescriptionIcon from "@material-ui/icons/Description";
 import AccountCircleIcon from "@material-ui/icons/AccountCircle";
+import Dialog from '@material-ui/core/Dialog';
+import MuiDialogTitle from '@material-ui/core/DialogTitle';
+import MuiDialogContent from '@material-ui/core/DialogContent';
+import MuiDialogActions from '@material-ui/core/DialogActions';
 
 import FilterFormWell from "./components/FilterFormWell";
 import FilterFromGeo from "./components/FilterFromGeo";
@@ -664,11 +673,15 @@ TabPanel.propTypes = {
 
 const drawerWidth = "250px";
 
+
+
 export default function Navigation(props) {
   const classes = useStyles();
   const theme = useTheme();
   const [stateApp, setStateApp] = useContext(AppContext);
   const [stateNav, setStateNav] = useContext(NavigationContext);
+  const [notifications, setNotifications] = useState(0);
+  const [openNotificationsPanel, setNotificationsPanel] = useState(false);
   const [openSupportCenter, setOpenSupportCenter] = useState(false);
   const [openContactForm, setOpenContactForm] = useState(false);
   const [openDrawer, setOpenDrawer] = useState(false);
@@ -694,6 +707,20 @@ export default function Navigation(props) {
       });
     }
   }, [stateApp.user]);
+
+  useEffect( () => {
+    if(stateApp.trackedwells !== null){
+      let countNotif = 0;
+      stateApp.trackedwells.forEach( data=> {
+        if(typeof data !== "undefined"){
+          data.notifications.forEach(row =>{
+              if(row.isNew) countNotif++;
+          });
+        }
+      });
+  setNotifications(countNotif);
+    }
+  }, [stateApp.trackedDataCount]);
 
   useEffect(() => {
     if (
@@ -994,6 +1021,15 @@ export default function Navigation(props) {
     setOpenContactForm(true);
   };
 
+  const handleOpenNotificationsPanel = () => {
+    setNotificationsPanel(true);
+  };
+
+  const [expanded, setExpanded] = React.useState(false);
+
+  const handleExpand = (panel) => (event, isExpanded) => {
+    setExpanded(isExpanded ? panel : false);
+  };
   const requestDemo = () => {
     window.open(
       "mailto:sales@m1neral.com?subject=Request for demo of premium features",
@@ -1008,6 +1044,112 @@ export default function Navigation(props) {
       activeDeal: { cardId: null, laneId: null },
     }));
   };
+
+  const NotificationsList = () => {
+    if ( stateApp.trackedwells !== null){
+        return stateApp.trackedwells.map(data => {
+          return data.notifications.map((row, index) => {
+            const is_expanded = expanded === `panel${index}`;
+            return(
+              <div key={index}>
+                <Accordion 
+                  expanded={is_expanded} 
+                  onChange={handleExpand(`panel${index}`)} 
+                  style={is_expanded ? {backgroundColor:"#ffedbd"} : {backgroundColor:""}}
+                >
+                  <AccordionSummary
+                    expandIcon={<ExpandMoreIcon />}
+                    aria-controls="panel1bh-content"
+                    id="panel1bh-header"
+                  >
+                      <Typography 
+                        className={classes.heading} 
+                        style={is_expanded ? {fontWeight: "bold"} : {fontWeight: "normal"} }
+                        >
+                          {row.title} 
+                          {row.isNew &&
+                          <span style={{backgroundColor:"red", fontSize: 12, padding: 2, margin: 2, borderRadius: 5, color:"#fff"}}>  new</span>
+                            }
+                      </Typography>
+                  {/* <Typography className={classes.secondaryHeading}>I am an accordion</Typography> */}
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Typography>
+                      {row.details}
+                    </Typography>
+                  </AccordionDetails>
+                </Accordion>
+              </div>
+            );
+          });
+        
+      });
+      }else{
+        return (
+          <Typography>Error</Typography>
+        )
+      }
+  };
+
+  const NotificationsPanel = props => {
+    const [open, setOpen] = useState(false);
+    const {isOpen, setIsOpen} = props;
+  
+    const DialogTitle = withStyles(useStyles())((props) => {
+      const { children, classes, onClose, ...other } = props;
+      return (
+        <MuiDialogTitle disableTypography className={classes.root} {...other}>
+          <Typography variant="h6">{children}</Typography>
+          {onClose ? (
+            <IconButton aria-label="close" className={classes.closeButton} onClick={onClose}>
+              <CloseIcon />
+            </IconButton>
+          ) : null}
+        </MuiDialogTitle>
+      );
+    });
+    
+    const DialogContent = withStyles((theme) => ({
+      root: {
+        padding: theme.spacing(2),
+      },
+    }))(MuiDialogContent);
+    
+    const DialogActions = withStyles((theme) => ({
+      root: {
+        margin: 0,
+        padding: theme.spacing(1),
+      },
+    }))(MuiDialogActions);
+  
+    
+    const handleClose = () => {
+      setOpen(false);
+      setIsOpen(false);
+    };
+  
+    useEffect(() => {
+      setOpen(isOpen);
+    },[isOpen, setIsOpen]);
+  
+    return (
+      <div>
+    <Dialog onClose={handleClose} aria-labelledby="customized-dialog-title" open={open}>
+        <DialogTitle>
+          Notifications
+        </DialogTitle>
+    <DialogContent dividers>
+    <NotificationsList/>
+    </DialogContent>
+    <DialogActions>
+      <Button autoFocus onClick={handleClose} color="primary">
+        Close
+      </Button>
+    </DialogActions>
+  </Dialog>
+  </div>
+  );
+  }
 
   return (
     <div className={classes.root}>
@@ -1286,6 +1428,23 @@ export default function Navigation(props) {
                         color="secondary"
                       >
                         <SettingsIcon />
+                      </Badge>
+                    }
+                    aria-label="filter settings"
+                  />
+                  <Tab
+                    value={8}
+                    classes={{ root: classes.tab }}
+                    style={{ paddingTop: 10}}
+                    onClick={e => setNotifications(0)}
+                    icon={
+                      <Badge
+                        badgeContent={notifications === 0 ? null : notifications}
+                        color="secondary"
+                      >
+                        <NotificationsIcon
+                         style={{ fontSize: 30 }}
+                         />
                       </Badge>
                     }
                     aria-label="filter settings"
@@ -1926,6 +2085,48 @@ export default function Navigation(props) {
               </Card>
             </ClickAwayListener>
           </TabPanel>
+          <TabPanel value={value} index={8} dir={theme.direction} style={{maxHeight: "50%"}}>
+            <ClickAwayListener onClickAway={handleClickAway}>
+              <Card className={classes.card}>
+                <CardHeader
+                  classes={{
+                    title: classes.cardTitle,
+                    subheader: classes.subheader,
+                  }}
+                  action={
+                    <div>
+                      <IconButton
+                        color="secondary"
+                        onClick={handleFilterCardClose}
+                      >
+                        <CloseIcon />
+                      </IconButton>
+                    </div>
+                  }
+                  title="Notifications"
+                  // subheader="Advanced Search"
+                />
+                {/* <CardActions
+                  classes={{
+                    root: classes.cardAction,
+                  }}
+                ></CardActions> */}
+                <CardContent className={classes.cardContent}>
+                  {/* <FilterDefaults /> */}
+                 <NotificationsList/>
+                </CardContent>
+                <Button
+                  color="secondary"
+                  variant="outlined"
+                  size="small"
+                  style={{margin: 4, right: 0}}
+                  onClick={handleOpenNotificationsPanel}
+                >
+                  See all
+                </Button>
+              </Card>
+            </ClickAwayListener>
+          </TabPanel>
         </div>
       ) : null}
       <main className={classes.content}>
@@ -1933,6 +2134,7 @@ export default function Navigation(props) {
         {props.children}
       </main>
       {renderMenu}
+    <NotificationsPanel isOpen={openNotificationsPanel} setIsOpen={setNotificationsPanel}/>
     </div>
   );
 }

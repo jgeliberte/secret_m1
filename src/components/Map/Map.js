@@ -151,7 +151,18 @@ export default function Map() {
   const [getRigs, { data: rigData }] = useLazyQuery(RIGSQUERY);
 
   /////end/////////temporary
-
+  const notifications = [
+    {isNew: true, title: "request for drilling", details : "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum." },
+    {isNew: true, title: "permit to operate", details: "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."},
+    {isNew: true, title: "request for drilling", details : "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum." },
+    {isNew: true, title: "permit to operate", details: "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."},
+    {isNew: false, title: "request for drilling", details : "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum." },
+    {isNew: false, title: "permit to operate", details: "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."},
+    {isNew: false, title: "request for drilling", details : "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum." },
+    {isNew: false, title: "permit to operate", details: "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."},
+    {isNew: false, title: "request for drilling", details : "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum." },
+    {isNew: false, title: "permit to operate", details: "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."},
+  ];
   useEffect(() => {
     if (stateApp.user && stateApp.user.mongoId) {
       setLoading(true);
@@ -252,23 +263,28 @@ export default function Map() {
     }
   }, [dataOwnersWells]);
 
+
   useEffect(() => {
     if (dataWells) {
       if (
         dataWells.wells &&
         dataWells.wells.results &&
         dataWells.wells.results.length > 0
-      )
+      ){
+      const trackwellData = dataWells.wells.results.map(data => {
+        return {...data, notifications};
+      });
         setStateApp((state) => ({
           ...state,
-          trackedwells: dataWells.wells.results,
+          trackedwells: trackwellData,
         }));
-      else
+      }
+      else{
         setStateApp((state) => ({
           ...state,
           trackedwells: null,
         }));
-    }
+    }}
   }, [dataWells]);
 
   const setLayer = (data, layerName, map) => {
@@ -403,17 +419,21 @@ export default function Map() {
         dataWellsForOwnerWellTrackLayer.wells &&
         dataWellsForOwnerWellTrackLayer.wells.results &&
         dataWellsForOwnerWellTrackLayer.wells.results.length > 0
-      )
+      ){
+      const trackOwnerwellData = dataWellsForOwnerWellTrackLayer.wells.results.map(data => {
+        return {...data, notifications};
+      });
         setStateApp((state) => ({
           ...state,
-          trackedOwnerWells: dataWellsForOwnerWellTrackLayer.wells.results,
+          trackedOwnerWells: trackOwnerwellData,
         }));
-      else
+      }
+      else{
         setStateApp((state) => ({
           ...state,
           trackedOwnerWells: null,
         }));
-    }
+    }}
   }, [dataWellsForOwnerWellTrackLayer]);
 
   useEffect(() => {
@@ -3807,4 +3827,5 @@ export default function Map() {
       </Portal>
     </div>
   );
+
 }

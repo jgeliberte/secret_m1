@@ -39,6 +39,7 @@ import Divider from "@material-ui/core/Divider";
 import CellContentEdition from "./SubComponents/CellContentEdition";
 import Avatar, { ConfigProvider } from "react-avatar";
 import ListItemAvatar from "@material-ui/core/ListItemAvatar";
+import NotificationsIcon from '@material-ui/icons/Notifications';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -207,10 +208,33 @@ export default function SubTable(props) {
   };
 
   ////setting all icons columns/////
+
   useEffect(() => {
     if (props.columns) {
       props.columns.forEach((column) => {
         switch (column.name) {
+          case "notifications":
+            {
+              column.options = {
+                ...column.options,
+                customBodyRender: (value, tableMeta, updateValue) => {
+                  let index=tableMeta.columnIndex;
+                  let data = typeof index !== "undefined" ? tableMeta.rowData[index] : [];
+                  let count = 0;
+                  typeof data !== "undefined" && data.forEach(row => {
+                    if (row.isNew) count++;
+                  });
+                  let badge = count > 0 ? count : null;
+                  return (
+                    <Badge badgeContent={badge} color="secondary">
+                    <NotificationsIcon/>
+                    </Badge>
+                  );
+                },
+              };
+            }
+
+            break;
           case "isTracked":
             {
               column.options = {
@@ -978,6 +1002,7 @@ export default function SubTable(props) {
   return (
     <div style={{ width: "100%", height: "100%", position: "relative" }}>
       {rows && !props.loading ? (
+        
         <div className={classes.root}>
           <MUIDataTable
             className={classes.table}

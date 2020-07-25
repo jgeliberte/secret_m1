@@ -208,7 +208,6 @@ export default function MapGridCard(props) {
         mapGridCardActivated: "track",
       }));
   };
-
   useEffect(() => {
     if (
       stateApp.mapGridCardActivated &&
