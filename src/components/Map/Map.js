@@ -445,12 +445,9 @@ export default function Map() {
         dataWellsForOwnerWellTrackLayer.wells.results &&
         dataWellsForOwnerWellTrackLayer.wells.results.length > 0
       ){
-      const trackOwnerwellData = dataWellsForOwnerWellTrackLayer.wells.results.map(data => {
-        return {...data, notifications};
-      });
         setStateApp((state) => ({
           ...state,
-          trackedOwnerWells: trackOwnerwellData,
+          trackedOwnerWells: dataWellsForOwnerWellTrackLayer.wells.results,
         }));
       }
       else{

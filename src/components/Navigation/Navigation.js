@@ -720,7 +720,186 @@ TabPanel.propTypes = {
 
 const drawerWidth = "250px";
 
+const NewAccordion = (props) =>{
+  const {data, expanded, classes, handleExpand, name} = props;
+  return data.map((row,index) =>{
+    const is_expanded = expanded === `${name}panel${index}`;
+    return(
+          <Accordion 
+            key={index}
+            expanded={is_expanded} 
+            onChange={handleExpand(`${name}panel${index}`)} 
+            className={is_expanded ? classes.expandedPanel : classes.expansionPanel}
+          >
+            <AccordionSummary
+              // expandIcon={<ExpandMoreIcon />}
+            >
+              <Grid container>
+              <Grid item md={9}>
+                <Typography 
+                  variant="body1"
+                  style={is_expanded ? {fontWeight: "bold"} : {fontWeight: "normal"} }
+                  >
+                    {row.title} 
+                </Typography>
+              </Grid>
+              <Grid item md={3}>
+                <Typography style={{fontSize: 12,color:"grey", width:"100%"}}>
+                  {
+                  since(new Date(row.ts).getTime())
+                  }
+                </Typography>
+              </Grid>
+              <Grid item md={12}>
+                <Typography style={{fontSize: 12,color:"grey", width:"100%"}}>
+                  {`${row.api} - ${row.address}`}
+                </Typography>
+              </Grid>
+              </Grid>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Typography variant="subtitle1">
+                {row.details}
+              </Typography>
+            </AccordionDetails>
+          </Accordion>
+    );
+    })
+};
 
+const NotificationsList = (props) => {
+  const {stateApp, isLimited, handleExpand, expanded} = props;
+  const classes = useStyles();
+  const initialized = [];
+  if ( stateApp.trackedwells !== null){
+       stateApp.trackedwells.forEach((data, index) => {
+         data.notifications.forEach((row, row_index) => {
+          initialized.push(row);
+        });
+    });
+  const sorted = _.orderBy(initialized, o=>new Date(o.ts), 'desc');
+  const recent = _.filter(sorted, o=>{return new DateDiff(new Date(), new Date(o.ts)).days() <= 7 });
+  const older = _.filter(sorted, o=>{return new DateDiff(new Date(), new Date(o.ts)).days() > 7 });
+  return(
+    <div>
+      {
+       isLimited ? (
+         <>
+        <div className={classes.divider}>
+          <Typography variant="overline">Recent</Typography>
+        </div>
+        <NewAccordion 
+        data={recent} 
+          handleExpand={handleExpand} 
+          expanded={expanded}
+          name="recent"
+          classes={classes}/>
+        { older.length > 0 && (
+        <>
+        <div className={classes.divider}>
+          <Typography variant="overline">Older</Typography>
+        </div>
+        <NewAccordion 
+          data={older} 
+          name="older"
+          expanded={expanded}
+          handleExpand={handleExpand} 
+          classes={classes}
+          />
+        </>
+        )}
+        </>
+       )
+       :
+       <NewAccordion 
+        data={sorted} 
+        handleExpand={handleExpand} 
+        expanded={expanded}
+        classes={classes}
+        name="all"
+       />
+     }
+    </div>
+  );
+  }else{
+      return (
+        <center><CircularProgress/></center>
+      )
+    }
+};
+
+const NotificationsPanel = props => {
+  const {isOpen, setNotificationsPanel, 
+    isLimited, classes, expanded,
+    handleExpand, stateApp
+  } = props;
+
+  const DialogTitle = (props) => {
+  const { children, onClose} = props;
+    return (
+      <MuiDialogTitle style={{backgroundColor: "#011133", padding: 0 }}>
+        <Grid container>
+          <Grid item md={11} sm={10}>
+        <Typography 
+          variant="h6" 
+          style={{color: "#fff", margin: 10}}
+          >
+            {children}
+        </Typography>
+        </Grid>
+        <Grid item md={1} sm={2}>
+          <IconButton 
+            style={{color: "#fff" }} 
+            className={classes.closeButton} 
+            onClick={handleClose}
+            >
+              <HighlightOffIcon />
+          </IconButton>
+        </Grid>
+        </Grid>
+      </MuiDialogTitle>
+    );
+  };
+
+
+  
+  const DialogContent = withStyles((theme) => ({
+        root: {
+          padding: theme.spacing(2),
+        },
+  }))(MuiDialogContent);
+      
+  const DialogActions = withStyles((theme) => ({
+        root: {
+          margin: 0,
+          padding: theme.spacing(1),
+        },
+  }))(MuiDialogActions);
+    
+      
+  const handleClose = () => {
+    setNotificationsPanel(false);
+  };
+
+
+  return (
+    <div>
+      <Dialog open={isOpen}>
+        <DialogTitle onClose={handleClose}>
+          Notifications
+        </DialogTitle>
+        <DialogContent dividers>
+          <NotificationsList 
+            stateApp={stateApp} 
+            expanded={expanded} 
+            handleExpand={handleExpand} 
+            isLimited={isLimited} 
+          />
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
 
 export default function Navigation(props) {
   const classes = useStyles();
@@ -747,6 +926,7 @@ export default function Navigation(props) {
   const [profileImage, setProfileImage] = useState(null);
   const [getProfileImage, profiledata] = useLazyQuery(GETPROFILEIMAGE);
   const [limitedNotif, setLimitedNotif] = useState(true);
+
   useEffect(() => {
     if (stateApp?.user?.email) {
       getProfileImage({
@@ -757,8 +937,8 @@ export default function Navigation(props) {
   }, [stateApp.user]);
 
   useEffect( () => {
+    let countNotif = 0;
     if(stateApp.trackedwells !== null){
-      let countNotif = 0;
       stateApp.trackedwells.forEach( data=> {
         if(typeof data !== "undefined"){
           data.notifications.forEach(row =>{
@@ -766,9 +946,18 @@ export default function Navigation(props) {
           });
         }
       });
-  setNotifications(countNotif);
     }
-  }, [stateApp.trackedDataCount]);
+    if(stateApp.trackedOwnerWells !== null){
+      stateApp.trackedOwnerWells.forEach( data=> {
+        if(typeof data.notifications !== "undefined"){
+          data.notifications.forEach(row =>{
+              if(row.isNew) countNotif++;
+          });
+        }
+      });
+    }
+    setNotifications(countNotif);
+  }, [stateApp.trackedwells, stateApp.trackedOwnerWells]);
 
   useEffect(() => {
     if (
@@ -1080,6 +1269,7 @@ export default function Navigation(props) {
   const handleExpand = (panel) => (event, isExpanded) => {
     setExpanded(isExpanded ? panel : false);
   };
+
   const requestDemo = () => {
     window.open(
       "mailto:sales@m1neral.com?subject=Request for demo of premium features",
@@ -1094,171 +1284,20 @@ export default function Navigation(props) {
       activeDeal: { cardId: null, laneId: null },
     }));
   };
-  const NewAccordion = (props) =>{
-    const {data} = props;
-    return data.map((row,index) =>{
-      const is_expanded = expanded === `panel${index}`;
-      return(
-            <Accordion 
-              key={index}
-              expanded={is_expanded} 
-              onChange={handleExpand(`panel${index}`)} 
-              className={is_expanded ? classes.expandedPanel : classes.expansionPanel}
-            >
-              <AccordionSummary
-                // expandIcon={<ExpandMoreIcon />}
-              >
-                <Grid container>
-                <Grid item md={9}>
-                  <Typography 
-                    variant="body1"
-                    style={is_expanded ? {fontWeight: "bold"} : {fontWeight: "normal"} }
-                    >
-                      {row.title} 
-                  </Typography>
-                </Grid>
-                <Grid item md={3}>
-                  <Typography style={{fontSize: 12,color:"grey", width:"100%"}}>
-                    {
-                    since(new Date(row.ts).getTime())
-                    }
-                  </Typography>
-                </Grid>
-                <Grid item md={12}>
-                  <Typography style={{fontSize: 12,color:"grey", width:"100%"}}>
-                    {`${row.api} - ${row.address}`}
-                  </Typography>
-                </Grid>
-                </Grid>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Typography variant="subtitle1">
-                  {row.details}
-                </Typography>
-              </AccordionDetails>
-            </Accordion>
-      );
-      })
-  };
-  const NotificationsList = (props) => {
-    const initialized = [];
-    if ( stateApp.trackedwells !== null){
-         stateApp.trackedwells.forEach((data, index) => {
-           data.notifications.forEach((row, row_index) => {
-            initialized.push(row);
-          });
-      });
-    const sorted = _.orderBy(initialized, o=>new Date(o.ts), 'desc');
-    const recent = _.filter(sorted, o=>{return new DateDiff(new Date(), new Date(o.ts)).days() <= 7 });
-    const older = _.filter(sorted, o=>{return new DateDiff(new Date(), new Date(o.ts)).days() > 7 });
-    return(
-      <div>
-        {
-         limitedNotif ? (
-           <>
-          <div className={classes.divider}>
-            <Typography variant="overline">Recent</Typography>
-          </div>
-          <NewAccordion data={recent}/>
-          { older.length > 0 && (
-          <>
-          <div className={classes.divider}>
-            <Typography variant="overline">Older</Typography>
-          </div>
-          <NewAccordion data={older}/>
-          </>
-          )}
-          </>
-         )
-         :
-         <NewAccordion data={sorted}/>
-       }
-      </div>
-    );
-    }else{
-        return (
-          <CircularProgress/>
-        )
-      }
-  };
-
-  const NotificationsPanel = props => {
-    const [open, setOpen] = useState(false);
-    const {isOpen, setIsOpen, isLimited} = props;
   
-    const DialogTitle = (props) => {
-      const { children, onClose} = props;
-      return (
-        <MuiDialogTitle style={{backgroundColor: "#011133", padding: 0 }}>
-          <Grid container>
-            <Grid item md={11} sm={10}>
-          <Typography 
-            variant="h6" 
-            style={{color: "#fff", margin: 10}}
-            >
-              {children}
-          </Typography>
-          </Grid>
-          <Grid item md={1} sm={2}>
-          {onClose ? (
-            <IconButton 
-              style={{color: "#fff" }} 
-              className={classes.closeButton} 
-              onClick={onClose}
-              >
-                <HighlightOffIcon />
-            </IconButton>
-          ) : null}
-          </Grid>
-          </Grid>
-        </MuiDialogTitle>
-      );
-    };
-    
-    const DialogContent = withStyles((theme) => ({
-      root: {
-        padding: theme.spacing(2),
-      },
-    }))(MuiDialogContent);
-    
-    const DialogActions = withStyles((theme) => ({
-      root: {
-        margin: 0,
-        padding: theme.spacing(1),
-      },
-    }))(MuiDialogActions);
   
-    
-    const handleClose = () => {
-      setOpen(false);
-      setLimitedNotif(true);
-      setIsOpen(false);
-    };
-  
-    useEffect(() => {
-      setOpen(isOpen);
-    },[isOpen]);
-  
-    return (
-      <div>
-        <Dialog onClose={handleClose} open={open}>
-          <DialogTitle onClose={handleClose}>
-            Notifications
-          </DialogTitle>
-          <DialogContent dividers>
-            <NotificationsList />
-          </DialogContent>
-          {/* <DialogActions>
-            
-          </DialogActions> */}
-        </Dialog>
-      </div>
-  );
-  }
-
   return (
     <div className={classes.root}>
       <CssBaseline />
+      <NotificationsPanel 
+        isOpen={openNotificationsPanel} 
+        setNotificationsPanel={setNotificationsPanel}
+        isLimited={limitedNotif}
+        classes={classes}
+        expanded={expanded}
+        handleExpand={handleExpand}
+        stateApp={stateApp}
+        />
       <AppBar
         position="fixed"
         className={clsx(classes.appBar, {
@@ -2208,11 +2247,17 @@ export default function Navigation(props) {
                   title="Notifications"
                 />
                 <CardContent className={classes.cardContent}>
-                 <NotificationsList />
+                 <NotificationsList 
+                    stateApp={stateApp} 
+                    handleExpand={handleExpand} 
+                    isLimited={limitedNotif}
+                    expanded={expanded} 
+                  />
                 </CardContent>
               </Card>
             </ClickAwayListener>
           </TabPanel>
+         
         </div>
       ) : null}
       <main className={classes.content}>
@@ -2220,7 +2265,7 @@ export default function Navigation(props) {
         {props.children}
       </main>
       {renderMenu}
-    <NotificationsPanel isOpen={openNotificationsPanel} setIsOpen={setNotificationsPanel} isLimited={limitedNotif}/>
+   
     </div>
   );
 }
