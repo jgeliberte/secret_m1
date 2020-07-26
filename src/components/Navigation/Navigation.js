@@ -947,8 +947,8 @@ export default function Navigation(props) {
         }
       });
     }
-    if(stateApp.trackedOwnerWells !== null){
-      stateApp.trackedOwnerWells.forEach( data=> {
+    if(stateApp.owners !== null){
+      stateApp.owners.forEach( data=> {
         if(typeof data.notifications !== "undefined"){
           data.notifications.forEach(row =>{
               if(row.isNew) countNotif++;
