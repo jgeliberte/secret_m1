@@ -152,6 +152,42 @@ export default function Map() {
 
   /////end/////////temporary
 
+  const notifications = [
+    {
+      isNew: true, 
+      title: "Permit Notification", 
+      details : "Lorem Ipsum is simply dummy text of the printing and typesetting industry. ",
+      ts: "2020-07-25 23:00:00",
+      api: "56132474",
+      address: "Texas"
+    },
+    {
+      isNew: false, 
+      title: "Request for drilling", 
+      details : "Lorem Ipsum is simply dummy text of the printing and typesetting industry. ",
+      ts: "2020-07-10 12:00:00",
+      api: "23547343",
+      address: "Colorado"
+    },
+    {
+      isNew: true, 
+      title: "Notification", 
+      details : "Lorem Ipsum is simply dummy text of the printing and typesetting industry. ",
+      ts: "2020-07-26 2:30:00",
+      api: "56132474",
+      address: "Texas"
+    },
+    {
+      isNew: false, 
+      title: "Request", 
+      details : "Lorem Ipsum is simply dummy text of the printing and typesetting industry. ",
+      ts: "2020-07-23 14:45:00",
+      api: "23547343",
+      address: "Colorado"
+    },
+
+  ];
+
   useEffect(() => {
     if (stateApp.user && stateApp.user.mongoId) {
       setLoading(true);
@@ -252,23 +288,28 @@ export default function Map() {
     }
   }, [dataOwnersWells]);
 
+
   useEffect(() => {
     if (dataWells) {
       if (
         dataWells.wells &&
         dataWells.wells.results &&
         dataWells.wells.results.length > 0
-      )
+      ){
+      const trackwellData = dataWells.wells.results.map(data => {
+        return {...data, notifications};
+      });
         setStateApp((state) => ({
           ...state,
-          trackedwells: dataWells.wells.results,
+          trackedwells: trackwellData,
         }));
-      else
+      }
+      else{
         setStateApp((state) => ({
           ...state,
           trackedwells: null,
         }));
-    }
+    }}
   }, [dataWells]);
 
   const setLayer = (data, layerName, map) => {
@@ -403,17 +444,18 @@ export default function Map() {
         dataWellsForOwnerWellTrackLayer.wells &&
         dataWellsForOwnerWellTrackLayer.wells.results &&
         dataWellsForOwnerWellTrackLayer.wells.results.length > 0
-      )
+      ){
         setStateApp((state) => ({
           ...state,
           trackedOwnerWells: dataWellsForOwnerWellTrackLayer.wells.results,
         }));
-      else
+      }
+      else{
         setStateApp((state) => ({
           ...state,
           trackedOwnerWells: null,
         }));
-    }
+    }}
   }, [dataWellsForOwnerWellTrackLayer]);
 
   useEffect(() => {
@@ -3807,4 +3849,5 @@ export default function Map() {
       </Portal>
     </div>
   );
+
 }

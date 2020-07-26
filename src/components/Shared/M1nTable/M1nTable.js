@@ -54,6 +54,7 @@ const TrackedOwnersHeadCells = [
     },
   },
   { name: "name", label: "Name" },
+  { name: "notifications", label: " "},
   {
     name: "ownershipType",
     label: "Entity",
@@ -166,11 +167,12 @@ const WellsHeadCells = [
     },
   },
   { name: "wellName", label: "Well" },
+  { name: "notifications", label: " "},
   { name: "api", label: "API" },
   { name: "operator", label: "Operator" },
   { name: "wellType", label: "Type" },
   {
-    name: "wellBoreProfile",
+    name: "wellBoreProfile",  
     label: "Profile",
   },
   {
@@ -245,7 +247,10 @@ const OwnersPerWellHeadCells = [
       viewColumns: false,
     },
   },
-  { name: "name", label: "Name" },
+  { 
+    name: "name", 
+    label: "Name" 
+  },
   {
     name: "ownershipType",
     label: "Entity",
@@ -865,6 +870,21 @@ export default function M1nTable(props) {
     }
   }, [dataTracks]);
 
+  const notifications = [
+    {
+      isNew: true, 
+      title: "request for drilling", 
+      details : "Lorem Ipsum is simply dummy text of the printing and typesetting industry. ",
+      ts: "2020-07-25 23:00:00"
+    },
+    {
+      isNew: false, 
+      title: "request for drilling", 
+      details : "Lorem Ipsum is simply dummy text of the printing and typesetting industry. ",
+      ts: "2020-07-25 12:00:00"
+    },
+
+  ];
   useEffect(() => {
     if (props.parent && props.parent === "trackOwners" && dataOwners) {
       if (
@@ -885,6 +905,7 @@ export default function M1nTable(props) {
           owner.tags = [[], 0];
           owner.contactsCounter = 0;
           owner.wellsCounter = [];
+          owner.notifications = notifications;
 
           if (dataOwnersWells.ownersWells) {
             for (let i = 0; i < dataOwnersWells.ownersWells.length; i++) {
@@ -1055,6 +1076,7 @@ export default function M1nTable(props) {
           well.isTracked = true;
           well.commentsCounter = 0;
           well.tags = [[], 0];
+          well.notifications = notifications;
 
           for (let i = 0; i < dataCommentsCounter.commentsCounter.length; i++) {
             if (well.id === dataCommentsCounter.commentsCounter[i]._id) {
@@ -2209,7 +2231,6 @@ export default function M1nTable(props) {
   //////////// Search end///////////////////////////////////////////////
 
   ////////////-----Add your code section here-----///////////////////////
-
   return (
     <Container maxWidth={false} className={classes.container}>
       <Table

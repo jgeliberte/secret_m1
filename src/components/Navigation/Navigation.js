@@ -1,7 +1,10 @@
 import React, { useState, useContext, useEffect, useRef } from "react";
+import since from "since-time-ago";
+import _ from "lodash";
+import DateDiff from "date-diff";
 import { borders } from "@material-ui/system";
 import { shadows } from "@material-ui/system";
-import { Paper } from "@material-ui/core";
+import { Grid } from "@material-ui/core";
 import { NavigationContext } from "./NavigationContext";
 import { TransactContext } from "../Transact/TransactContext";
 import { AppContext } from "../../AppContext";
@@ -15,6 +18,8 @@ import styled from "styled-components";
 //@material-ui components
 import AppBar from "@material-ui/core/AppBar";
 import DashboardIcon from "@material-ui/icons/Dashboard";
+import NotificationsIcon from '@material-ui/icons/Notifications';
+import HighlightOffIcon from '@material-ui/icons/HighlightOff';
 import LayersIcon from "@material-ui/icons/Layers";
 //import Avatar from "@material-ui/core/Avatar";
 import Toolbar from "@material-ui/core/Toolbar";
@@ -43,6 +48,10 @@ import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import SwipeableDrawer from "@material-ui/core/SwipeableDrawer";
 import FormControl from "@material-ui/core/FormControl";
 import InputLabel from "@material-ui/core/InputLabel";
+import Accordion from '@material-ui/core/Accordion';
+import AccordionDetails from '@material-ui/core/AccordionDetails';
+import AccordionSummary from '@material-ui/core/AccordionSummary';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import { Link } from "react-router-dom";
 
 import Menu from "@material-ui/core/Menu";
@@ -83,6 +92,10 @@ import PeopleOutlineIcon from "@material-ui/icons/PeopleOutline";
 import ShoppingCartIcon from "@material-ui/icons/ShoppingCart";
 import DescriptionIcon from "@material-ui/icons/Description";
 import AccountCircleIcon from "@material-ui/icons/AccountCircle";
+import Dialog from '@material-ui/core/Dialog';
+import MuiDialogTitle from '@material-ui/core/DialogTitle';
+import MuiDialogContent from '@material-ui/core/DialogContent';
+import MuiDialogActions from '@material-ui/core/DialogActions';
 
 import FilterFormWell from "./components/FilterFormWell";
 import FilterFromGeo from "./components/FilterFromGeo";
@@ -109,7 +122,6 @@ import {
   createMuiTheme,
   withStyles
 } from "@material-ui/core/styles";
-
 const theme = createMuiTheme({
   overrides: {
     MuiButton: {
@@ -318,6 +330,29 @@ const useStyles = makeStyles((theme) => ({
     borderColor: "#011133",
     maxWidth: 650,
     minWidth: 620,
+  },
+  notifications_card: {
+    borderWidth: "thin",
+    overflow:"hidden",
+    borderColor: "#011133",
+    maxWidth: 400,
+    minWidth: 300,
+    right:0,
+    borderRadius:5,
+    paddingBottom: 10,
+    boxShadow: "0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)",
+    // before:{
+    //   content:'',
+    //   position: "absolute",
+    //   left: 0,
+    //   right: 0,
+    //   margin: 0,
+    //   width: 0,
+    //   height: 0,
+    //   borderTop: "25px solid #6A0136",
+    //   borderLeft:" 50px solid transparent",
+    //   borderRight: "50px solid transparent",
+    // },
   },
   cardTitle: {
     fontFamily: "Poppins",
@@ -560,6 +595,22 @@ const useStyles = makeStyles((theme) => ({
     marginTop: "6px",
     color: theme.palette.secondary.contrastText,
   },
+  expansionPanel: {
+    '&:hover': {
+      cursor: 'pointer',
+      backgroundColor:"#ffedbd",
+    },
+    borderBottom: "1px solid #f2f2f2"
+  },
+  expandedPanel: {
+    '&:hover': {
+      cursor: 'pointer',
+      backgroundColor:"#ffedbd",
+    },
+    borderBottom: "1px solid #f3f3f3",
+    backgroundColor:"#f2f2f2",
+
+  },
 
   supportDrawer: {
     position: "fixed",
@@ -570,6 +621,11 @@ const useStyles = makeStyles((theme) => ({
       paddingRight: "30px",
     },
   },
+  divider:{
+    backgroundColor:"#f2f2f2",
+    padding: 10,
+  }
+
 }));
 
 const M1neralLogoDrawer = (props) => (
@@ -664,11 +720,194 @@ TabPanel.propTypes = {
 
 const drawerWidth = "250px";
 
+const NewAccordion = (props) =>{
+  const {data, expanded, classes, handleExpand, name} = props;
+  return data.map((row,index) =>{
+    const is_expanded = expanded === `${name}panel${index}`;
+    return(
+          <Accordion 
+            key={index}
+            expanded={is_expanded} 
+            onChange={handleExpand(`${name}panel${index}`)} 
+            className={is_expanded ? classes.expandedPanel : classes.expansionPanel}
+          >
+            <AccordionSummary
+              // expandIcon={<ExpandMoreIcon />}
+            >
+              <Grid container>
+              <Grid item md={9}>
+                <Typography 
+                  variant="body1"
+                  style={is_expanded ? {fontWeight: "bold"} : {fontWeight: "normal"} }
+                  >
+                    {row.title} 
+                </Typography>
+              </Grid>
+              <Grid item md={3}>
+                <Typography style={{fontSize: 12,color:"grey", width:"100%"}}>
+                  {
+                  since(new Date(row.ts).getTime())
+                  }
+                </Typography>
+              </Grid>
+              <Grid item md={12}>
+                <Typography style={{fontSize: 12,color:"grey", width:"100%"}}>
+                  {`${row.api} - ${row.address}`}
+                </Typography>
+              </Grid>
+              </Grid>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Typography variant="subtitle1">
+                {row.details}
+              </Typography>
+            </AccordionDetails>
+          </Accordion>
+    );
+    })
+};
+
+const NotificationsList = (props) => {
+  const {stateApp, isLimited, handleExpand, expanded} = props;
+  const classes = useStyles();
+  const initialized = [];
+  if ( stateApp.trackedwells !== null){
+       stateApp.trackedwells.forEach((data, index) => {
+         data.notifications.forEach((row, row_index) => {
+          initialized.push(row);
+        });
+    });
+  const sorted = _.orderBy(initialized, o=>new Date(o.ts), 'desc');
+  const recent = _.filter(sorted, o=>{return new DateDiff(new Date(), new Date(o.ts)).days() <= 7 });
+  const older = _.filter(sorted, o=>{return new DateDiff(new Date(), new Date(o.ts)).days() > 7 });
+  return(
+    <div>
+      {
+       isLimited ? (
+         <>
+        <div className={classes.divider}>
+          <Typography variant="overline">Recent</Typography>
+        </div>
+        <NewAccordion 
+        data={recent} 
+          handleExpand={handleExpand} 
+          expanded={expanded}
+          name="recent"
+          classes={classes}/>
+        { older.length > 0 && (
+        <>
+        <div className={classes.divider}>
+          <Typography variant="overline">Older</Typography>
+        </div>
+        <NewAccordion 
+          data={older} 
+          name="older"
+          expanded={expanded}
+          handleExpand={handleExpand} 
+          classes={classes}
+          />
+        </>
+        )}
+        </>
+       )
+       :
+       <NewAccordion 
+        data={sorted} 
+        handleExpand={handleExpand} 
+        expanded={expanded}
+        classes={classes}
+        name="all"
+       />
+     }
+    </div>
+  );
+  }else{
+      return (
+        <center><CircularProgress/></center>
+      )
+    }
+};
+
+const NotificationsPanel = props => {
+  const {isOpen, setNotificationsPanel, 
+    isLimited, classes, expanded,
+    handleExpand, stateApp
+  } = props;
+
+  const DialogTitle = (props) => {
+  const { children, onClose} = props;
+    return (
+      <MuiDialogTitle style={{backgroundColor: "#011133", padding: 0 }}>
+        <Grid container>
+          <Grid item md={11} sm={10}>
+        <Typography 
+          variant="h6" 
+          style={{color: "#fff", margin: 10}}
+          >
+            {children}
+        </Typography>
+        </Grid>
+        <Grid item md={1} sm={2}>
+          <IconButton 
+            style={{color: "#fff" }} 
+            className={classes.closeButton} 
+            onClick={handleClose}
+            >
+              <HighlightOffIcon />
+          </IconButton>
+        </Grid>
+        </Grid>
+      </MuiDialogTitle>
+    );
+  };
+
+
+  
+  const DialogContent = withStyles((theme) => ({
+        root: {
+          padding: theme.spacing(2),
+        },
+  }))(MuiDialogContent);
+      
+  const DialogActions = withStyles((theme) => ({
+        root: {
+          margin: 0,
+          padding: theme.spacing(1),
+        },
+  }))(MuiDialogActions);
+    
+      
+  const handleClose = () => {
+    setNotificationsPanel(false);
+  };
+
+
+  return (
+    <div>
+      <Dialog open={isOpen}>
+        <DialogTitle onClose={handleClose}>
+          Notifications
+        </DialogTitle>
+        <DialogContent dividers>
+          <NotificationsList 
+            stateApp={stateApp} 
+            expanded={expanded} 
+            handleExpand={handleExpand} 
+            isLimited={isLimited} 
+          />
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 export default function Navigation(props) {
   const classes = useStyles();
   const theme = useTheme();
   const [stateApp, setStateApp] = useContext(AppContext);
   const [stateNav, setStateNav] = useContext(NavigationContext);
+  const [notifications, setNotifications] = useState(0);
+  const [openNotificationsPanel, setNotificationsPanel] = useState(false);
   const [openSupportCenter, setOpenSupportCenter] = useState(false);
   const [openContactForm, setOpenContactForm] = useState(false);
   const [openDrawer, setOpenDrawer] = useState(false);
@@ -686,6 +925,8 @@ export default function Navigation(props) {
   const [matchFind, setMatchFind] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
   const [getProfileImage, profiledata] = useLazyQuery(GETPROFILEIMAGE);
+  const [limitedNotif, setLimitedNotif] = useState(true);
+
   useEffect(() => {
     if (stateApp?.user?.email) {
       getProfileImage({
@@ -694,6 +935,29 @@ export default function Navigation(props) {
       });
     }
   }, [stateApp.user]);
+
+  useEffect( () => {
+    let countNotif = 0;
+    if(stateApp.trackedwells !== null){
+      stateApp.trackedwells.forEach( data=> {
+        if(typeof data !== "undefined"){
+          data.notifications.forEach(row =>{
+              if(row.isNew) countNotif++;
+          });
+        }
+      });
+    }
+    if(stateApp.owners !== null){
+      stateApp.owners.forEach( data=> {
+        if(typeof data.notifications !== "undefined"){
+          data.notifications.forEach(row =>{
+              if(row.isNew) countNotif++;
+          });
+        }
+      });
+    }
+    setNotifications(countNotif);
+  }, [stateApp.trackedwells, stateApp.trackedOwnerWells]);
 
   useEffect(() => {
     if (
@@ -994,6 +1258,18 @@ export default function Navigation(props) {
     setOpenContactForm(true);
   };
 
+  const handleOpenNotificationsPanel = () => {
+    setNotificationsPanel(true);
+    setLimitedNotif(false);
+    handleClickAway();
+  };
+
+  const [expanded, setExpanded] = React.useState(false);
+
+  const handleExpand = (panel) => (event, isExpanded) => {
+    setExpanded(isExpanded ? panel : false);
+  };
+
   const requestDemo = () => {
     window.open(
       "mailto:sales@m1neral.com?subject=Request for demo of premium features",
@@ -1008,10 +1284,20 @@ export default function Navigation(props) {
       activeDeal: { cardId: null, laneId: null },
     }));
   };
-
+  
+  
   return (
     <div className={classes.root}>
       <CssBaseline />
+      <NotificationsPanel 
+        isOpen={openNotificationsPanel} 
+        setNotificationsPanel={setNotificationsPanel}
+        isLimited={limitedNotif}
+        classes={classes}
+        expanded={expanded}
+        handleExpand={handleExpand}
+        stateApp={stateApp}
+        />
       <AppBar
         position="fixed"
         className={clsx(classes.appBar, {
@@ -1286,6 +1572,23 @@ export default function Navigation(props) {
                         color="secondary"
                       >
                         <SettingsIcon />
+                      </Badge>
+                    }
+                    aria-label="filter settings"
+                  />
+                  <Tab
+                    value={8}
+                    classes={{ root: classes.tab }}
+                    style={{ paddingTop: 10}}
+                    onClick={e => setNotifications(0)}
+                    icon={
+                      <Badge
+                        badgeContent={notifications === 0 ? null : notifications}
+                        color="secondary"
+                      >
+                        <NotificationsIcon
+                         style={{ fontSize: 30 }}
+                         />
                       </Badge>
                     }
                     aria-label="filter settings"
@@ -1926,6 +2229,35 @@ export default function Navigation(props) {
               </Card>
             </ClickAwayListener>
           </TabPanel>
+          <TabPanel value={value} index={8} dir={theme.direction} style={{display: "flex", justifyContent:"flex-end"}}>
+            <ClickAwayListener onClickAway={handleClickAway}>
+              <Card className={classes.notifications_card}>
+                <CardHeader
+                  action={
+                    <div>
+                      <Typography
+                        color="secondary"
+                        style={{margin: 4, right: 0, cursor: "pointer"}}
+                        onClick={handleOpenNotificationsPanel}
+                      >
+                        See all
+                      </Typography>
+                    </div>
+                  }
+                  title="Notifications"
+                />
+                <CardContent className={classes.cardContent}>
+                 <NotificationsList 
+                    stateApp={stateApp} 
+                    handleExpand={handleExpand} 
+                    isLimited={limitedNotif}
+                    expanded={expanded} 
+                  />
+                </CardContent>
+              </Card>
+            </ClickAwayListener>
+          </TabPanel>
+         
         </div>
       ) : null}
       <main className={classes.content}>
@@ -1933,6 +2265,7 @@ export default function Navigation(props) {
         {props.children}
       </main>
       {renderMenu}
+   
     </div>
   );
 }
