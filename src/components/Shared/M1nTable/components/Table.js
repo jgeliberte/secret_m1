@@ -40,7 +40,7 @@ import CellContentEdition from "./SubComponents/CellContentEdition";
 import Avatar, { ConfigProvider } from "react-avatar";
 import ListItemAvatar from "@material-ui/core/ListItemAvatar";
 import NotificationsIcon from '@material-ui/icons/Notifications';
-
+import { NotificationsPanel } from "../../../Navigation/Navigation";
 const useStyles = makeStyles((theme) => ({
   root: {
     width: "100%",
@@ -171,6 +171,15 @@ export default function SubTable(props) {
   const [m1nSelectedRowsIds, setM1nSelectedRowsIds] = useState([]);
   const [m1nSelectedRowsTracks, setM1nSelectedRowsTracks] = useState([]);
 
+  const [openPanel, setOpenPanel] = useState(false);
+  const [eachNotification, setEachNotification] = useState(null);
+
+  const handleNotifcations = (e, data) => {
+    console.log(data);
+    setEachNotification(data);
+    setOpenPanel(!openPanel);
+    e.stopPropagation();
+  };
   useEffect(() => {
     if (props.rows) {
       if (props.orderByTracks)
@@ -213,22 +222,36 @@ export default function SubTable(props) {
     if (props.columns) {
       props.columns.forEach((column) => {
         switch (column.name) {
-          case "notifications":
+          case "wellName":
             {
               column.options = {
                 ...column.options,
                 customBodyRender: (value, tableMeta, updateValue) => {
                   let index=tableMeta.columnIndex;
-                  let data = typeof index !== "undefined" ? tableMeta.rowData[index] : [];
-                  let count = 0;
+                  let name = typeof index !== "undefined" ? tableMeta.rowData[index] : "";
+                  let selected_row = rows !== null ? rows[tableMeta.rowIndex] : [];
+                  let data = typeof selected_row !=="undefined" ? selected_row.notifications: [];
+                  let count = 1;
                   typeof data !== "undefined" && data.forEach(row => {
                     if (row.isNew) count++;
                   });
                   let badge = count > 0 ? count : null;
                   return (
-                    <Badge badgeContent={badge} color="secondary">
-                    <NotificationsIcon color="secondary"/>
-                    </Badge>
+                    <div >
+                    {name}
+                      <Tooltip 
+                        title={`${count} new notifications`}
+                        placement="top"
+                        style={{ marginRight: "10px", cursor:"pointer" }}
+                        onClick={e=>handleNotifcations(e, data)}
+                      >
+                        <Badge badgeContent={badge} color="secondary">
+                          <NotificationsIcon  
+                            color="secondary"
+                            />
+                        </Badge>
+                      </Tooltip>
+                      </div>
                   );
                 },
               };
@@ -998,9 +1021,15 @@ export default function SubTable(props) {
   let routeChange = (route) => {
     history.push(route);
   };
+  
 
   return (
     <div style={{ width: "100%", height: "100%", position: "relative" }}>
+      <NotificationsPanel 
+        isOpen={openPanel}
+        fromTrackingTabel={eachNotification}
+        setNotificationsPanel={setOpenPanel}
+        />
       {rows && !props.loading ? (
         
         <div className={classes.root}>

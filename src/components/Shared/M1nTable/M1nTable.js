@@ -54,7 +54,6 @@ const TrackedOwnersHeadCells = [
     },
   },
   { name: "name", label: "Name" },
-  { name: "notifications", label: " "},
   {
     name: "ownershipType",
     label: "Entity",
@@ -167,7 +166,6 @@ const WellsHeadCells = [
     },
   },
   { name: "wellName", label: "Well" },
-  { name: "notifications", label: " "},
   { name: "api", label: "API" },
   { name: "operator", label: "Operator" },
   { name: "wellType", label: "Type" },
@@ -2231,6 +2229,7 @@ export default function M1nTable(props) {
   //////////// Search end///////////////////////////////////////////////
 
   ////////////-----Add your code section here-----///////////////////////
+
   return (
     <Container maxWidth={false} className={classes.container}>
       <Table
