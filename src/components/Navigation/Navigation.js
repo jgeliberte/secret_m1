@@ -48,10 +48,10 @@ import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import SwipeableDrawer from "@material-ui/core/SwipeableDrawer";
 import FormControl from "@material-ui/core/FormControl";
 import InputLabel from "@material-ui/core/InputLabel";
-import Accordion from '@material-ui/core/Accordion';
-import AccordionDetails from '@material-ui/core/AccordionDetails';
-import AccordionSummary from '@material-ui/core/AccordionSummary';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import MuiAccordion from '@material-ui/core/Accordion';
+import MuiAccordionSummary from '@material-ui/core/AccordionSummary';
+import MuiAccordionDetails from '@material-ui/core/AccordionDetails';
 import { Link } from "react-router-dom";
 
 import Menu from "@material-ui/core/Menu";
@@ -600,7 +600,7 @@ const useStyles = makeStyles((theme) => ({
       cursor: 'pointer',
       backgroundColor:"#ffedbd",
     },
-    borderBottom: "1px solid #f2f2f2"
+    borderBottom: "1px solid #f2f2f2",
   },
   expandedPanel: {
     '&:hover': {
@@ -609,7 +609,10 @@ const useStyles = makeStyles((theme) => ({
     },
     borderBottom: "1px solid #f3f3f3",
     backgroundColor:"#f2f2f2",
-
+    '&$expanded': {
+      margin: 'auto',
+    },
+    expanded: {},
   },
 
   supportDrawer: {
@@ -719,6 +722,45 @@ TabPanel.propTypes = {
 };
 
 const drawerWidth = "250px";
+const Accordion = withStyles({
+  root: {
+    border: '1px solid rgba(0, 0, 0, .125)',
+    boxShadow: 'none',
+    '&:not(:last-child)': {
+      borderBottom: 0,
+    },
+    '&:before': {
+      display: 'none',
+    },
+    '&$expanded': {
+      margin: 'auto',
+    },
+  },
+  expanded: {},
+})(MuiAccordion);
+
+const AccordionSummary = withStyles({
+  root: {
+    marginBottom: -1,
+    minHeight: 56,
+    '&$expanded': {
+      minHeight: 56,
+    },
+  },
+  content: {
+    '&$expanded': {
+      margin: '12px 0',
+    },
+  },
+  expanded: {},
+})(MuiAccordionSummary);
+
+const AccordionDetails = withStyles((theme) => ({
+  root: {
+    padding: theme.spacing(2),
+  },
+}))(MuiAccordionDetails);
+
 
 const NewAccordion = (props) =>{
   const {data, expanded, classes, handleExpand, name} = props;
@@ -768,7 +810,12 @@ const NewAccordion = (props) =>{
 };
 
 const NotificationsList = (props) => {
-  const {stateApp, isLimited, handleExpand, expanded} = props;
+  const { isLimited, fromTrackingTabel } = props;
+  const [stateApp, setStateApp] = useContext(AppContext);
+  const [expanded, setExpanded] = useState(false);
+  const handleExpand = (panel) => (event, isExpanded) => {
+    setExpanded(isExpanded ? panel : false);
+  };
   const classes = useStyles();
   const initialized = [];
   if ( stateApp.trackedwells !== null){
@@ -777,9 +824,11 @@ const NotificationsList = (props) => {
           initialized.push(row);
         });
     });
-  const sorted = _.orderBy(initialized, o=>new Date(o.ts), 'desc');
-  const recent = _.filter(sorted, o=>{return new DateDiff(new Date(), new Date(o.ts)).days() <= 7 });
-  const older = _.filter(sorted, o=>{return new DateDiff(new Date(), new Date(o.ts)).days() > 7 });
+    const final_data = fromTrackingTabel ? fromTrackingTabel : initialized;
+    const sorted = _.orderBy(final_data, o=>new Date(o.ts), 'desc');
+    const recent = _.filter(sorted, o=>{return new DateDiff(new Date(), new Date(o.ts)).days() <= 7 });
+    const older = _.filter(sorted, o=>{return new DateDiff(new Date(), new Date(o.ts)).days() > 7 });
+    
   return(
     <div>
       {
@@ -828,11 +877,10 @@ const NotificationsList = (props) => {
     }
 };
 
-const NotificationsPanel = props => {
-  const {isOpen, setNotificationsPanel, 
-    isLimited, classes, expanded,
-    handleExpand, stateApp
-  } = props;
+export const NotificationsPanel = props => {
+  const classes = useStyles();
+  const {isOpen, isLimited, setNotificationsPanel, fromTrackingTabel
+      } = props;
 
   const DialogTitle = (props) => {
   const { children, onClose} = props;
@@ -890,10 +938,9 @@ const NotificationsPanel = props => {
         </DialogTitle>
         <DialogContent dividers>
           <NotificationsList 
-            stateApp={stateApp} 
-            expanded={expanded} 
-            handleExpand={handleExpand} 
             isLimited={isLimited} 
+            handleClose={handleClose}
+            fromTrackingTabel={fromTrackingTabel}
           />
         </DialogContent>
       </Dialog>
@@ -1293,10 +1340,6 @@ export default function Navigation(props) {
         isOpen={openNotificationsPanel} 
         setNotificationsPanel={setNotificationsPanel}
         isLimited={limitedNotif}
-        classes={classes}
-        expanded={expanded}
-        handleExpand={handleExpand}
-        stateApp={stateApp}
         />
       <AppBar
         position="fixed"
@@ -1580,7 +1623,6 @@ export default function Navigation(props) {
                     value={8}
                     classes={{ root: classes.tab }}
                     style={{ paddingTop: 10}}
-                    onClick={e => setNotifications(0)}
                     icon={
                       <Badge
                         badgeContent={notifications === 0 ? null : notifications}
