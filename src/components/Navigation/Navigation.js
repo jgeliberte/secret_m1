@@ -21,6 +21,7 @@ import DashboardIcon from "@material-ui/icons/Dashboard";
 import NotificationsIcon from '@material-ui/icons/Notifications';
 import HighlightOffIcon from '@material-ui/icons/HighlightOff';
 import LayersIcon from "@material-ui/icons/Layers";
+import Skeleton from '@material-ui/lab/Skeleton';
 //import Avatar from "@material-ui/core/Avatar";
 import Toolbar from "@material-ui/core/Toolbar";
 import IconButton from "@material-ui/core/IconButton";
@@ -333,12 +334,12 @@ const useStyles = makeStyles((theme) => ({
   },
   notifications_card: {
     borderWidth: "thin",
-    overflow:"hidden",
+    overflow: "hidden",
     borderColor: "#011133",
     maxWidth: 400,
     minWidth: 300,
-    right:0,
-    borderRadius:5,
+    right: 0,
+    borderRadius: 5,
     paddingBottom: 10,
     boxShadow: "0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)",
     // before:{
@@ -598,17 +599,17 @@ const useStyles = makeStyles((theme) => ({
   expansionPanel: {
     '&:hover': {
       cursor: 'pointer',
-      backgroundColor:"#ffedbd",
+      backgroundColor: "#ffedbd",
     },
     borderBottom: "1px solid #f2f2f2",
   },
   expandedPanel: {
     '&:hover': {
       cursor: 'pointer',
-      backgroundColor:"#ffedbd",
+      backgroundColor: "#ffedbd",
     },
     borderBottom: "1px solid #f3f3f3",
-    backgroundColor:"#f2f2f2",
+    backgroundColor: "#f2f2f2",
     '&$expanded': {
       margin: 'auto',
     },
@@ -624,8 +625,8 @@ const useStyles = makeStyles((theme) => ({
       paddingRight: "30px",
     },
   },
-  divider:{
-    backgroundColor:"#f2f2f2",
+  divider: {
+    backgroundColor: "#f2f2f2",
     padding: 10,
   }
 
@@ -762,51 +763,51 @@ const AccordionDetails = withStyles((theme) => ({
 }))(MuiAccordionDetails);
 
 
-const NewAccordion = (props) =>{
-  const {data, expanded, classes, handleExpand, name} = props;
-  return data.map((row,index) =>{
+const NewAccordion = (props) => {
+  const { data, expanded, classes, handleExpand, name } = props;
+  return data.map((row, index) => {
     const is_expanded = expanded === `${name}panel${index}`;
-    return(
-          <Accordion 
-            key={index}
-            expanded={is_expanded} 
-            onChange={handleExpand(`${name}panel${index}`)} 
-            className={is_expanded ? classes.expandedPanel : classes.expansionPanel}
-          >
-            <AccordionSummary
-              // expandIcon={<ExpandMoreIcon />}
-            >
-              <Grid container>
-              <Grid item md={9}>
-                <Typography 
-                  variant="body1"
-                  style={is_expanded ? {fontWeight: "bold"} : {fontWeight: "normal"} }
-                  >
-                    {row.title} 
-                </Typography>
-              </Grid>
-              <Grid item md={3}>
-                <Typography style={{fontSize: 12,color:"grey", width:"100%"}}>
-                  {
-                  since(new Date(row.ts).getTime())
-                  }
-                </Typography>
-              </Grid>
-              <Grid item md={12}>
-                <Typography style={{fontSize: 12,color:"grey", width:"100%"}}>
-                  {`${row.api} - ${row.address}`}
-                </Typography>
-              </Grid>
-              </Grid>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Typography variant="subtitle1">
-                {row.details}
+    return (
+      <Accordion
+        key={index}
+        expanded={is_expanded}
+        onChange={handleExpand(`${name}panel${index}`)}
+        className={is_expanded ? classes.expandedPanel : classes.expansionPanel}
+      >
+        <AccordionSummary
+        // expandIcon={<ExpandMoreIcon />}
+        >
+          <Grid container>
+            <Grid item md={9}>
+              <Typography
+                variant="body1"
+                style={is_expanded ? { fontWeight: "bold" } : { fontWeight: "normal" }}
+              >
+                {row.title}
               </Typography>
-            </AccordionDetails>
-          </Accordion>
+            </Grid>
+            <Grid item md={3}>
+              <Typography style={{ fontSize: 12, color: "grey", width: "100%" }}>
+                {
+                  since(new Date(row.ts).getTime())
+                }
+              </Typography>
+            </Grid>
+            <Grid item md={12}>
+              <Typography style={{ fontSize: 12, color: "grey", width: "100%" }}>
+                {`${row.api} - ${row.address}`}
+              </Typography>
+            </Grid>
+          </Grid>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Typography variant="subtitle1">
+            {row.details}
+          </Typography>
+        </AccordionDetails>
+      </Accordion>
     );
-    })
+  })
 };
 
 const NotificationsList = (props) => {
@@ -818,113 +819,119 @@ const NotificationsList = (props) => {
   };
   const classes = useStyles();
   const initialized = [];
-  if ( stateApp.trackedwells !== null){
-       stateApp.trackedwells.forEach((data, index) => {
-         data.notifications.forEach((row, row_index) => {
-          initialized.push(row);
-        });
+  if (stateApp.trackedwells !== null) {
+    stateApp.trackedwells.forEach((data, index) => {
+      data.notifications.forEach((row, row_index) => {
+        initialized.push(row);
+      });
     });
     const final_data = fromTrackingTabel ? fromTrackingTabel : initialized;
-    const sorted = _.orderBy(final_data, o=>new Date(o.ts), 'desc');
-    const recent = _.filter(sorted, o=>{return new DateDiff(new Date(), new Date(o.ts)).days() <= 7 });
-    const older = _.filter(sorted, o=>{return new DateDiff(new Date(), new Date(o.ts)).days() > 7 });
-    
-  return(
-    <div>
-      {
-       isLimited ? (
-         <>
-        <div className={classes.divider}>
-          <Typography variant="overline">Recent</Typography>
-        </div>
-        <NewAccordion 
-        data={recent} 
-          handleExpand={handleExpand} 
-          expanded={expanded}
-          name="recent"
-          classes={classes}/>
-        { older.length > 0 && (
-        <>
-        <div className={classes.divider}>
-          <Typography variant="overline">Older</Typography>
-        </div>
-        <NewAccordion 
-          data={older} 
-          name="older"
-          expanded={expanded}
-          handleExpand={handleExpand} 
-          classes={classes}
-          />
-        </>
-        )}
-        </>
-       )
-       :
-       <NewAccordion 
-        data={sorted} 
-        handleExpand={handleExpand} 
-        expanded={expanded}
-        classes={classes}
-        name="all"
-       />
-     }
-    </div>
-  );
-  }else{
-      return (
-        <center><CircularProgress/></center>
-      )
-    }
+    const sorted = _.orderBy(final_data, o => new Date(o.ts), 'desc');
+    const recent = _.filter(sorted, o => { return new DateDiff(new Date(), new Date(o.ts)).days() <= 7 });
+    const older = _.filter(sorted, o => { return new DateDiff(new Date(), new Date(o.ts)).days() > 7 });
+
+    return (
+      <div>
+        {
+          isLimited ? (
+            <>
+              <div className={classes.divider}>
+                <Typography variant="overline">Recent</Typography>
+              </div>
+              <NewAccordion
+                data={recent}
+                handleExpand={handleExpand}
+                expanded={expanded}
+                name="recent"
+                classes={classes} />
+              {older.length > 0 && (
+                <>
+                  <div className={classes.divider}>
+                    <Typography variant="overline">Older</Typography>
+                  </div>
+                  <NewAccordion
+                    data={older}
+                    name="older"
+                    expanded={expanded}
+                    handleExpand={handleExpand}
+                    classes={classes}
+                  />
+                </>
+              )}
+            </>
+          )
+            :
+            <NewAccordion
+              data={sorted}
+              handleExpand={handleExpand}
+              expanded={expanded}
+              classes={classes}
+              name="all"
+            />
+        }
+      </div>
+    );
+  } else {
+    return (
+      <div>
+        <Skeleton />
+        <Skeleton animation={false} />
+        <Skeleton animation="wave" />
+        <Skeleton animation="wave" />
+        <Skeleton animation="wave" />
+      </div>
+    )
+  }
 };
 
 export const NotificationsPanel = props => {
   const classes = useStyles();
-  const {isOpen, isLimited, setNotificationsPanel, fromTrackingTabel
-      } = props;
+  const { isOpen, isLimited, setNotificationsPanel, fromTrackingTabel
+  } = props;
 
   const DialogTitle = (props) => {
-  const { children, onClose} = props;
+    const { children, onClose } = props;
     return (
-      <MuiDialogTitle style={{backgroundColor: "#011133", padding: 0 }}>
+      <MuiDialogTitle style={{ backgroundColor: "#011133", padding: 0 }}>
         <Grid container>
           <Grid item md={11} sm={10}>
-        <Typography 
-          variant="h6" 
-          style={{color: "#fff", margin: 10}}
-          >
-            {children}
-        </Typography>
-        </Grid>
-        <Grid item md={1} sm={2}>
-          <IconButton 
-            style={{color: "#fff" }} 
-            className={classes.closeButton} 
-            onClick={handleClose}
+            <Typography
+              variant="h6"
+              style={{ color: "#fff", margin: 10 }}
+            >
+              {children}
+            </Typography>
+          </Grid>
+          <Grid item md={1} sm={2}>
+            <IconButton
+              style={{ color: "#fff" }}
+              className={classes.closeButton}
+              onClick={handleClose}
             >
               <HighlightOffIcon />
-          </IconButton>
-        </Grid>
+            </IconButton>
+          </Grid>
         </Grid>
       </MuiDialogTitle>
     );
   };
 
 
-  
+
   const DialogContent = withStyles((theme) => ({
-        root: {
-          padding: theme.spacing(2),
-        },
+    root: {
+      padding: theme.spacing(2),
+    },
   }))(MuiDialogContent);
-      
+
   const DialogActions = withStyles((theme) => ({
-        root: {
-          margin: 0,
-          padding: theme.spacing(1),
-        },
+    root: {
+      margin: 0,
+      padding: theme.spacing(1),
+    },
   }))(MuiDialogActions);
-    
-      
+
+
   const handleClose = () => {
     setNotificationsPanel(false);
   };
@@ -932,13 +939,13 @@ export const NotificationsPanel = props => {
 
   return (
     <div>
-      <Dialog open={isOpen}>
+      <Dialog open={isOpen} fullWidth>
         <DialogTitle onClose={handleClose}>
           Notifications
         </DialogTitle>
         <DialogContent dividers>
-          <NotificationsList 
-            isLimited={isLimited} 
+          <NotificationsList
+            isLimited={isLimited}
             handleClose={handleClose}
             fromTrackingTabel={fromTrackingTabel}
           />
@@ -983,22 +990,22 @@ export default function Navigation(props) {
     }
   }, [stateApp.user]);
 
-  useEffect( () => {
+  useEffect(() => {
     let countNotif = 0;
-    if(stateApp.trackedwells !== null){
-      stateApp.trackedwells.forEach( data=> {
-        if(typeof data !== "undefined"){
-          data.notifications.forEach(row =>{
-              if(row.isNew) countNotif++;
+    if (stateApp.trackedwells !== null) {
+      stateApp.trackedwells.forEach(data => {
+        if (typeof data !== "undefined") {
+          data.notifications.forEach(row => {
+            if (row.isNew) countNotif++;
           });
         }
       });
     }
-    if(stateApp.owners !== null){
-      stateApp.owners.forEach( data=> {
-        if(typeof data.notifications !== "undefined"){
-          data.notifications.forEach(row =>{
-              if(row.isNew) countNotif++;
+    if (stateApp.owners !== null) {
+      stateApp.owners.forEach(data => {
+        if (typeof data.notifications !== "undefined") {
+          data.notifications.forEach(row => {
+            if (row.isNew) countNotif++;
           });
         }
       });
@@ -1331,16 +1338,16 @@ export default function Navigation(props) {
       activeDeal: { cardId: null, laneId: null },
     }));
   };
-  
-  
+
+
   return (
     <div className={classes.root}>
       <CssBaseline />
-      <NotificationsPanel 
-        isOpen={openNotificationsPanel} 
+      <NotificationsPanel
+        isOpen={openNotificationsPanel}
         setNotificationsPanel={setNotificationsPanel}
         isLimited={limitedNotif}
-        />
+      />
       <AppBar
         position="fixed"
         className={clsx(classes.appBar, {
@@ -1355,10 +1362,10 @@ export default function Navigation(props) {
                   {theme.direction === "rtl" ? <MenuIcon /> : <MenuIcon />}
                 </IconButton>
 
-                <div style={{marginRight: '35px'}}>
-                <Button color='secondary' size="large" onClick={handleClickLogo} className={classes.margin}>
-                <M1neralLogoWhiteLetters />
-                </Button>
+                <div style={{ marginRight: '35px' }}>
+                  <Button color='secondary' size="large" onClick={handleClickLogo} className={classes.margin}>
+                    <M1neralLogoWhiteLetters />
+                  </Button>
                 </div>
 
               </div>
@@ -1371,8 +1378,8 @@ export default function Navigation(props) {
                   {theme.direction === "rtl" ? (
                     <ChevronRightIcon />
                   ) : (
-                    <ChevronLeftIcon />
-                  )}
+                      <ChevronLeftIcon />
+                    )}
                 </IconButton>
               </div>
             ) : null}
@@ -1380,7 +1387,7 @@ export default function Navigation(props) {
             {matchTrack ? (
               <CardHeader
                 className={classes.trackHeader}
-                //title="Track"
+              //title="Track"
               />
             ) : null}
 
@@ -1404,8 +1411,8 @@ export default function Navigation(props) {
                 </div>
               </div>
             ) : (
-              <div style={{ display: "none" }}></div>
-            )}
+                <div style={{ display: "none" }}></div>
+              )}
 
             {matchTrack ? (
               <div
@@ -1491,8 +1498,8 @@ export default function Navigation(props) {
                 </div>
               </div>
             ) : (
-              <div style={{ display: "none" }}></div>
-            )}
+                <div style={{ display: "none" }}></div>
+              )}
             {matchLocation ? (
               <div ref={anchorEl} className={classes.filterTabs}>
                 <Tabs
@@ -1622,15 +1629,15 @@ export default function Navigation(props) {
                   <Tab
                     value={8}
                     classes={{ root: classes.tab }}
-                    style={{ paddingTop: 10}}
+                    style={{ paddingTop: 10 }}
                     icon={
                       <Badge
                         badgeContent={notifications === 0 ? null : notifications}
                         color="secondary"
                       >
                         <NotificationsIcon
-                         style={{ fontSize: 30 }}
-                         />
+                          style={{ fontSize: 30 }}
+                        />
                       </Badge>
                     }
                     aria-label="filter settings"
@@ -1638,8 +1645,8 @@ export default function Navigation(props) {
                 </Tabs>
               </div>
             ) : (
-              <div style={{ display: "none" }}></div>
-            )}
+                <div style={{ display: "none" }}></div>
+              )}
             <Divider style={{ margin: 1 }} orientation="vertical" />
             <IconButton
               style={{ left: "8.5px" }}
@@ -1648,26 +1655,26 @@ export default function Navigation(props) {
               {profileImage ? (
                 <Avatar src={profileImage} size="38" round />
               ) : (
-                <Avatar name={stateApp.user.name} size="38" round />
-              )}
+                  <Avatar name={stateApp.user.name} size="38" round />
+                )}
             </IconButton>
           </Toolbar>
         ) : (
-          <div
-          //className={classes.goHome} onClick={sendHome}
-          >
-            {location.pathname !== "/" ? (
-              <Link to="/">
-                <M1neralLogoLogin />
-              </Link>
-            ) : (
-              <M1neralLogoLogin />
-            )}
-
             <div
-            //className={classes.homeButton}
+            //className={classes.goHome} onClick={sendHome}
             >
-              {/* <Button
+              {location.pathname !== "/" ? (
+                <Link to="/">
+                  <M1neralLogoLogin />
+                </Link>
+              ) : (
+                  <M1neralLogoLogin />
+                )}
+
+              <div
+              //className={classes.homeButton}
+              >
+                {/* <Button
                 variant="contained"
                 disableElevation
                 type="submit"
@@ -1678,7 +1685,7 @@ export default function Navigation(props) {
               >
                 Help?
               </Button> */}
-              {/* <Link
+                {/* <Link
                 to={location.pathname !== "/" ? "/" : "/signup"}
                 onClick={() => {
                   setStateApp((stateApp) => ({
@@ -1699,9 +1706,9 @@ export default function Navigation(props) {
 
                 
               </Link> */}
+              </div>
             </div>
-          </div>
-        )}
+          )}
       </AppBar>
 
       <Drawer
@@ -1728,8 +1735,8 @@ export default function Navigation(props) {
             {theme.direction === "rtl" ? (
               <ChevronRightIcon />
             ) : (
-              <ChevronLeftIcon />
-            )}
+                <ChevronLeftIcon />
+              )}
           </IconButton>
         </div>
         <Divider variant="middle" light="true" />
@@ -2271,7 +2278,7 @@ export default function Navigation(props) {
               </Card>
             </ClickAwayListener>
           </TabPanel>
-          <TabPanel value={value} index={8} dir={theme.direction} style={{display: "flex", justifyContent:"flex-end"}}>
+          <TabPanel value={value} index={8} dir={theme.direction} style={{ display: "flex", justifyContent: "flex-end" }}>
             <ClickAwayListener onClickAway={handleClickAway}>
               <Card className={classes.notifications_card}>
                 <CardHeader
@@ -2279,7 +2286,7 @@ export default function Navigation(props) {
                     <div>
                       <Typography
                         color="secondary"
-                        style={{margin: 4, right: 0, cursor: "pointer"}}
+                        style={{ margin: 4, right: 0, cursor: "pointer" }}
                         onClick={handleOpenNotificationsPanel}
                       >
                         See all
@@ -2288,18 +2295,18 @@ export default function Navigation(props) {
                   }
                   title="Notifications"
                 />
-                <CardContent className={classes.cardContent}>
-                 <NotificationsList 
-                    stateApp={stateApp} 
-                    handleExpand={handleExpand} 
+                <CardContent className={classes.cardContent} style={{ padding: 10 }}>
+                  <NotificationsList
+                    stateApp={stateApp}
+                    handleExpand={handleExpand}
                     isLimited={limitedNotif}
-                    expanded={expanded} 
+                    expanded={expanded}
                   />
                 </CardContent>
               </Card>
             </ClickAwayListener>
           </TabPanel>
-         
+
         </div>
       ) : null}
       <main className={classes.content}>
@@ -2307,7 +2314,7 @@ export default function Navigation(props) {
         {props.children}
       </main>
       {renderMenu}
-   
+
     </div>
   );
 }
